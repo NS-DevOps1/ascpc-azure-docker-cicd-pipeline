@@ -1,33 +1,30 @@
-const express = require('express')
-const app = express()
-import { exec } from 'child_process';
-const port = 80
+const express = require('express');
+const { exec } = require('child_process');
 
-app.get("/execute", (req, res) => {
-  // requested command
-  const command = req.query.cmd;
-  
-  // execute command on system
+const app = express();
+const port = 80;
+
+app.use(express.json());
+
+// Endpoint pour exécuter une commande Bash
+app.post('/run', (req, res) => {
+  const { command } = req.body;
+
+  if (!command) {
+    return res.status(400).json({ error: 'Commande manquante' });
+  }
+
   exec(command, (error, stdout, stderr) => {
-    // handle errors
     if (error) {
-      res.send(`Error executing the command: ${error}`);
+      return res.status(500).json({ error: error.message });
     }
-
     if (stderr) {
-      res.send(`Standard error:\n${stderr}`);
+      return res.status(200).json({ output: stdout, warning: stderr });
     }
-
-    // send output of the command
-    res.send(`Standard output:\n${stdout}`);
+    res.status(200).json({ output: stdout });
   });
 });
 
-
-app.get('/', (req, res) => {
-  res.send('Welcome to your ASCPC web app!')
-})
-
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
-})
+  console.log(`Serveur lancé sur http://localhost:${port}`);
+});
